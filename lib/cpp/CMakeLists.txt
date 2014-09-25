@@ -22,12 +22,23 @@ cmake_minimum_required(VERSION 2.8)
 
 project(libthrift)
 
+# CMake specific files like templates and find modules are in the cmake subdirectory of the source dir
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+# Some default settings
+include(DefineCMakeDefaults)
+
+# Build time options are defined here
+include(DefineOptions)
+
 # Read the version information from the Autoconf file
 file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../../configure.ac" CONFIGURE_AC REGEX "AC_INIT\\(.*\\)" )
 
 # The following variable is used in the version.h.in file
 string(REGEX REPLACE "AC_INIT\\(\\[.*\\], \\[([0-9]+\\.[0-9]+\\.[0-9]+(-dev)?)\\]\\)" "\\1" PACKAGE_VERSION ${CONFIGURE_AC})
+set(PACKAGE_NAME "thrift")
 message(STATUS "Thrift package version: ${PACKAGE_VERSION}")
+
 
 # These are internal to CMake
 string(REGEX REPLACE "([0-9]+\\.[0-9]+\\.[0-9]+)(-dev)?" "\\1" thrift_VERSION ${PACKAGE_VERSION})
@@ -36,20 +47,10 @@ string(REGEX REPLACE "[0-9]+\\.([0-9])+\\.[0-9]+" "\\1" thrift_VERSION_MINOR ${t
 string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" thrift_VERSION_PATCH ${thrift_VERSION})
 message(STATUS "Thrift version: ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH})")
 
-# add definitions
-include(DefineCMakeDefaults.cmake)
-include(DefinePlatformDefaults.cmake)
-include(DefineCompilerFlags.cmake)
-include(DefineInstallationPaths.cmake)
-include(DefineOptions.cmake)
-
-include(ConfigureChecks.cmake)
-configure_file(config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/thrift/config.h)
-
+# Find required packages
 find_package(Boost 1.53.0 REQUIRED)
-find_package(ZLIB)
-find_package(OpenSSL)
-
+include_directories("${Boost_INCLUDE_DIR}")
+    
 # Create the thrift C++ library
 set( libthrift_SOURCES 
    src/thrift/Thrift.cpp
@@ -107,21 +108,34 @@ if (WIN32)
     endif()
 endif()
 
-
+# If OpenSSL is not found just ignore the OpenSSL stuff
+find_package(OpenSSL)
 if(OPENSSL_FOUND AND WITH_OPENSSL)
     list( APPEND libthrift_SOURCES 
        src/thrift/transport/TSSLSocket.cpp
        src/thrift/transport/TSSLServerSocket.cpp
     )
+    include_directories("${OPENSSL_INCLUDE_DIR}")
+    list(APPEND SYSLIBS "${OPENSSL_LIBRARIES}")
 endif()
 
-if(POSIX AND NOT FORCE_STDTHREADS)
+# WITH_*THREADS selects whicht threading library to use
+if(WITH_BOOSTTHREADS)
+    set( USE_BOOST_THREAD 1)    
+    set( libthrift_threads_SOURCES 
+        src/thrift/concurrency/BoostThreadFactory.cpp
+        src/thrift/concurrency/BoostMonitor.cpp
+        src/thrift/concurrency/BoostMutex.cpp
+    )
+    list(APPEND SYSLIBS "${Boost_LIBRARIES}")
+elseif(POSIX AND NOT WITH_STDTHREADS)
     set( libthrift_threads_SOURCES
         src/thrift/concurrency/PosixThreadFactory.cpp
         src/thrift/concurrency/Mutex.cpp
         src/thrift/concurrency/Monitor.cpp
     )
 else()
+    set( USE_STD_THREAD 1)
     set( libthrift_threads_SOURCES
         src/thrift/concurrency/StdThreadFactory.cpp
         src/thrift/concurrency/StdMutex.cpp
@@ -129,13 +143,7 @@ else()
     )
 endif()
 
-
-set( libthrift_boostthreads_SOURCES 
-    src/thrift/concurrency/BoostThreadFactory.cpp
-    src/thrift/concurrency/BoostMonitor.cpp
-    src/thrift/concurrency/BoostMutex.cpp
-)
-
+# Thrift non blocking server
 set( libthriftnb_SOURCES
     src/thrift/server/TNonblockingServer.cpp
     src/thrift/async/TAsyncProtocolProcessor.cpp
@@ -143,39 +151,79 @@ set( libthriftnb_SOURCES
     src/thrift/async/TEvhttpClientChannel.cpp
 )
 
+# Thrift zlib server
 set( libthriftz_SOURCES
     src/thrift/transport/TZlibTransport.cpp
 )
 
-add_library(thrift SHARED ${libthrift_SOURCES} ${libthrift_threads_SOURCES})
+# Thrift Qt4 server
+set( libthriftz_SOURCES
+    src/thrift/qt/TQIODeviceTransport.cpp
+    src/thrift/qt/TQTcpServer.cpp
+)
+
 
 if(WITH_STATIC_LIB)
-add_library(thrift_static STATIC ${libthrift_SOURCES} ${libthrift_threads_SOURCES})
+    add_library(thrift SHARED ${libthrift_SOURCES} ${libthrift_threads_SOURCES})
+    target_link_libraries(thrift ${SYSLIBY})
 endif()
 
-if (Boost_FOUND)
-    add_library(thrift_boostthreads SHARED ${libthrift_SOURCES} ${libthrift_boostthreads_SOURCES})
-    target_link_libraries(thrift_boostthreads ${Boost_LIBRARIES})
+if(WITH_STATIC_LIB)
+    add_library(thrift_static STATIC ${libthrift_SOURCES} ${libthrift_threads_SOURCES})
+    target_link_libraries(thrift_static ${SYSLIBY})
 endif()
 
-if(Libevent_FOUND) # Libevent comes with CMake support form upstream
+
+if(WITH_LIBEVENT)
+    find_package(Libevent REQUIRED)  # Libevent comes with CMake support form upstream
     add_library(thriftnb SHARED ${libthrift_SOURCES} ${libthriftnb_SOURCES})
-    target_link_libraries(thriftnb ${Libevent_LIBRARIES})
+    target_link_libraries(thriftnb ${SYSLIBY} ${Libevent_LIBRARIES})
+    include_directories(${Libevent_INCLUDE_DIR})
 endif()
 
-if(ZLIB_FOUND)
+if(WITH_ZLIB)
+    find_package(ZLIB REQUIRED)
     add_library(thriftz SHARED ${libthrift_SOURCES} ${libthriftz_SOURCES})
-    target_link_libraries(thriftz ${ZLIB_LIBRARIES})
-endif(ZLIB_FOUND)
+    target_link_libraries(thriftz ${SYSLIBY} ${ZLIB_LIBRARIES})
+    include_directories(${ZLIB_INCLUDE_DIR})
+endif()
 
-include_directories(${CMAKE_CURRENT_BINARY_DIR} src)
+
+if(WITH_QT4)
+    find_package(Qt4 REQUIRED)
+    add_library(thriftqt SHARED ${libthrift_SOURCES} ${libthriftqt_SOURCES})
+    target_link_libraries(thriftqt ${SYSLIBY} ${QT_LIBRARIES})
+    include_directories(${QT_INCLUDES})
+endif()
+
+include_directories("${CMAKE_CURRENT_BINARY_DIR}" src)
+
+# Add Some definitions for cmake and generate a config.h file
+include(ConfigureChecks)
+configure_file(cmake/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/config.h)
 
 install(TARGETS thrift LIBRARY DESTINATION lib)
 
 if(NOT MSVC)
-    add_definitions( "-std=c++0x -pedantic -Wextra")
+    add_definitions("-std=c++0x -pedantic -Wextra")
+else()
+    add_definitions("-DUNICODE")
 endif()
 
-# TODO add libthriftqt based on qt existence
-# TODO configure option to enable, disable libs
-# TODO add test subdir
+# TODO: Make this configurable on windows
+if(USE_MT)
+set(CompilerFlags
+        CMAKE_CXX_FLAGS
+        CMAKE_CXX_FLAGS_DEBUG
+        CMAKE_CXX_FLAGS_RELEASE
+        CMAKE_C_FLAGS
+        CMAKE_C_FLAGS_DEBUG
+        CMAKE_C_FLAGS_RELEASE
+        )
+foreach(CompilerFlag ${CompilerFlags})
+  string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
+endforeach()
+endif()
+
+# TODO: add install commands
+# TODO: add test subdir
