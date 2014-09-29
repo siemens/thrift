@@ -20,7 +20,7 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-project(libthrift)
+project(thriftcpp)
 
 # CMake specific files like templates and find modules are in the cmake subdirectory of the source dir
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
@@ -50,9 +50,9 @@ message(STATUS "Thrift version: ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thr
 # Find required packages
 find_package(Boost 1.53.0 REQUIRED)
 include_directories("${Boost_INCLUDE_DIR}")
-    
+
 # Create the thrift C++ library
-set( libthrift_SOURCES 
+set( thriftcpp_SOURCES
    src/thrift/Thrift.cpp
    src/thrift/TApplicationException.cpp
    src/thrift/VirtualProfiling.cpp
@@ -83,18 +83,22 @@ set( libthrift_SOURCES
    src/thrift/processor/PeekProcessor.cpp
 )
 
+# Install the headers
+install(DIRECTORY "src/thrift" DESTINATION "include"
+    FILES_MATCHING PATTERN "*.h")
+
 # This files don't work on Windows CE as there is no pipe support
 if (NOT WINCE)
-    list(APPEND libthrift_SOURCES
+    list(APPEND thriftcpp_SOURCES
        src/thrift/transport/TPipe.cpp
        src/thrift/transport/TPipeServer.cpp
        src/thrift/transport/TFileTransport.cpp
-    )   
+    )
 endif()
 
 
 if (WIN32)
-    list(APPEND libthrift_SOURCES
+    list(APPEND thriftcpp_SOURCES
         src/thrift/windows/TWinsockSingleton.cpp
         src/thrift/windows/SocketPair.cpp
         src/thrift/windows/GetTimeOfDay.cpp
@@ -102,7 +106,7 @@ if (WIN32)
     )
     if(NOT WINCE)
         # This file uses pipes so it currently won't work on Windows CE
-        list(APPEND libthrift_SOURCES
+        list(APPEND thriftcpp_SOURCES
             src/thrift/windows/OverlappedSubmissionThread.cpp
         )
     endif()
@@ -111,7 +115,7 @@ endif()
 # If OpenSSL is not found just ignore the OpenSSL stuff
 find_package(OpenSSL)
 if(OPENSSL_FOUND AND WITH_OPENSSL)
-    list( APPEND libthrift_SOURCES 
+    list( APPEND thriftcpp_SOURCES
        src/thrift/transport/TSSLSocket.cpp
        src/thrift/transport/TSSLServerSocket.cpp
     )
@@ -121,22 +125,22 @@ endif()
 
 # WITH_*THREADS selects whicht threading library to use
 if(WITH_BOOSTTHREADS)
-    set( USE_BOOST_THREAD 1)    
-    set( libthrift_threads_SOURCES 
+    set( USE_BOOST_THREAD 1)
+    set( thriftcpp_threads_SOURCES
         src/thrift/concurrency/BoostThreadFactory.cpp
         src/thrift/concurrency/BoostMonitor.cpp
         src/thrift/concurrency/BoostMutex.cpp
     )
     list(APPEND SYSLIBS "${Boost_LIBRARIES}")
 elseif(POSIX AND NOT WITH_STDTHREADS)
-    set( libthrift_threads_SOURCES
+    set( thriftcpp_threads_SOURCES
         src/thrift/concurrency/PosixThreadFactory.cpp
         src/thrift/concurrency/Mutex.cpp
         src/thrift/concurrency/Monitor.cpp
     )
 else()
     set( USE_STD_THREAD 1)
-    set( libthrift_threads_SOURCES
+    set( thriftcpp_threads_SOURCES
         src/thrift/concurrency/StdThreadFactory.cpp
         src/thrift/concurrency/StdMutex.cpp
         src/thrift/concurrency/StdMonitor.cpp
@@ -144,7 +148,7 @@ else()
 endif()
 
 # Thrift non blocking server
-set( libthriftnb_SOURCES
+set( thriftcppnb_SOURCES
     src/thrift/server/TNonblockingServer.cpp
     src/thrift/async/TAsyncProtocolProcessor.cpp
     src/thrift/async/TEvhttpServer.cpp
@@ -152,48 +156,74 @@ set( libthriftnb_SOURCES
 )
 
 # Thrift zlib server
-set( libthriftz_SOURCES
+set( thriftcppz_SOURCES
     src/thrift/transport/TZlibTransport.cpp
 )
 
 # Thrift Qt4 server
-set( libthriftz_SOURCES
+set( thriftcppz_SOURCES
     src/thrift/qt/TQIODeviceTransport.cpp
     src/thrift/qt/TQTcpServer.cpp
 )
 
 
 if(WITH_STATIC_LIB)
-    add_library(thrift SHARED ${libthrift_SOURCES} ${libthrift_threads_SOURCES})
+    add_library(thrift SHARED ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
     target_link_libraries(thrift ${SYSLIBY})
+    #set_target_properties(thrift PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
+    install(TARGETS thrift
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        PUBLIC_HEADER DESTINATION include)
 endif()
 
 if(WITH_STATIC_LIB)
-    add_library(thrift_static STATIC ${libthrift_SOURCES} ${libthrift_threads_SOURCES})
+    add_library(thrift_static STATIC ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
     target_link_libraries(thrift_static ${SYSLIBY})
+    install(TARGETS thrift_static
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        PUBLIC_HEADER DESTINATION include)
 endif()
 
 
 if(WITH_LIBEVENT)
     find_package(Libevent REQUIRED)  # Libevent comes with CMake support form upstream
-    add_library(thriftnb SHARED ${libthrift_SOURCES} ${libthriftnb_SOURCES})
+    add_library(thriftnb SHARED ${thriftcpp_SOURCES} ${thriftcppnb_SOURCES})
     target_link_libraries(thriftnb ${SYSLIBY} ${Libevent_LIBRARIES})
     include_directories(${Libevent_INCLUDE_DIR})
+    install(TARGETS thriftnb thriftnb_static
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        PUBLIC_HEADER DESTINATION include)
 endif()
 
 if(WITH_ZLIB)
     find_package(ZLIB REQUIRED)
-    add_library(thriftz SHARED ${libthrift_SOURCES} ${libthriftz_SOURCES})
+    add_library(thriftz SHARED ${thriftcpp_SOURCES} ${thriftcppz_SOURCES})
     target_link_libraries(thriftz ${SYSLIBY} ${ZLIB_LIBRARIES})
     include_directories(${ZLIB_INCLUDE_DIR})
+    install(TARGETS thriftz
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        PUBLIC_HEADER DESTINATION include)
 endif()
 
 
 if(WITH_QT4)
     find_package(Qt4 REQUIRED)
-    add_library(thriftqt SHARED ${libthrift_SOURCES} ${libthriftqt_SOURCES})
+    add_library(thriftqt SHARED ${thriftcpp_SOURCES} ${thriftcppqt_SOURCES})
     target_link_libraries(thriftqt ${SYSLIBY} ${QT_LIBRARIES})
     include_directories(${QT_INCLUDES})
+    install(TARGETS thriftqt
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        PUBLIC_HEADER DESTINATION include)
 endif()
 
 include_directories("${CMAKE_CURRENT_BINARY_DIR}" src)
@@ -202,12 +232,10 @@ include_directories("${CMAKE_CURRENT_BINARY_DIR}" src)
 include(ConfigureChecks)
 configure_file(cmake/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/config.h)
 
-install(TARGETS thrift LIBRARY DESTINATION lib)
-
 if(NOT MSVC)
     add_definitions("-std=c++0x -pedantic -Wextra")
 else()
-    add_definitions("-DUNICODE")
+    add_definitions("-DUNICODE -D_UNICODE")
 endif()
 
 # TODO: Make this configurable on windows
@@ -225,5 +253,7 @@ foreach(CompilerFlag ${CompilerFlags})
 endforeach()
 endif()
 
-# TODO: add install commands
+# Package it
+include(CPackConfig)
+
 # TODO: add test subdir
