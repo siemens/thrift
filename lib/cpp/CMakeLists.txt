@@ -83,10 +83,6 @@ set( thriftcpp_SOURCES
    src/thrift/processor/PeekProcessor.cpp
 )
 
-# Install the headers
-install(DIRECTORY "src/thrift" DESTINATION "include"
-    FILES_MATCHING PATTERN "*.h")
-
 # This files don't work on Windows CE as there is no pipe support
 if (NOT WINCE)
     list(APPEND thriftcpp_SOURCES
@@ -167,7 +163,7 @@ set( thriftcppz_SOURCES
 )
 
 
-if(WITH_STATIC_LIB)
+if(WITH_SHARED_LIB)
     add_library(thrift SHARED ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
     target_link_libraries(thrift ${SYSLIBY})
     #set_target_properties(thrift PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
@@ -187,7 +183,6 @@ if(WITH_STATIC_LIB)
         ARCHIVE DESTINATION lib
         PUBLIC_HEADER DESTINATION include)
 endif()
-
 
 if(WITH_LIBEVENT)
     find_package(Libevent REQUIRED)  # Libevent comes with CMake support form upstream
@@ -238,20 +233,9 @@ else()
     add_definitions("-DUNICODE -D_UNICODE")
 endif()
 
-# TODO: Make this configurable on windows
-if(USE_MT)
-set(CompilerFlags
-        CMAKE_CXX_FLAGS
-        CMAKE_CXX_FLAGS_DEBUG
-        CMAKE_CXX_FLAGS_RELEASE
-        CMAKE_C_FLAGS
-        CMAKE_C_FLAGS_DEBUG
-        CMAKE_C_FLAGS_RELEASE
-        )
-foreach(CompilerFlag ${CompilerFlags})
-  string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
-endforeach()
-endif()
+# Install the headers
+install(DIRECTORY "src/thrift" DESTINATION "include"
+    FILES_MATCHING PATTERN "*.h" PATTERN "*.tcc")
 
 # Package it
 include(CPackConfig)
