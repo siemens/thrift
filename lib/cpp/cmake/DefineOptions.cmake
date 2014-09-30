@@ -12,8 +12,30 @@ option(WITH_STATIC_LIB "Build with a static library" ON)
 option(WITH_TESTING "Build with unit tests" OFF)
 option(WITH_EXAMPLES "Build examples" ON)
 
+# Visual Studio only options
+if(MSVC)
+option(WITH_MT "Build unsing MT instead of MT (MSVC only)" OFF)
 
+# Replace MD with MT
+if(WITH_MT)
+    set(CompilerFlags
+            CMAKE_CXX_FLAGS
+            CMAKE_CXX_FLAGS_DEBUG
+            CMAKE_CXX_FLAGS_RELEASE
+            CMAKE_C_FLAGS
+            CMAKE_C_FLAGS_DEBUG
+            CMAKE_C_FLAGS_RELEASE
+            )
+    foreach(CompilerFlag ${CompilerFlags})
+      string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
+    endforeach()
+    # For Debug build types, append a "d" to the library names.
+    set(CMAKE_DEBUG_POSTFIX "mtd" CACHE STRING "Set debug library postfix" FORCE)
+    set(CMAKE_RELEASE_POSTFIX "mt" CACHE STRING "Set release library postfix" FORCE)
+else(WITH_MT)
+    # For Debug build types, append a "d" to the library names.
+    set(CMAKE_DEBUG_POSTFIX "mdd" CACHE STRING "Set debug library postfix" FORCE)
+    set(CMAKE_RELEASE_POSTFIX "md" CACHE STRING "Set release library postfix" FORCE)
+endif(WITH_MT)
 
-if (WITH_TESTING)
-  set(WITH_STATIC_LIB ON)
-endif (WITH_TESTING)
+endif(MSVC)
