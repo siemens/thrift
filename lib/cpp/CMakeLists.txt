@@ -30,6 +30,7 @@ include(DefineCMakeDefaults)
 
 # Build time options are defined here
 include(DefineOptions)
+include(DefineInstallationPaths)
 
 # Read the version information from the Autoconf file
 file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../../configure.ac" CONFIGURE_AC REGEX "AC_INIT\\(.*\\)" )
@@ -166,60 +167,60 @@ set( thriftcppz_SOURCES
 
 if(WITH_SHARED_LIB)
     add_library(thrift SHARED ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
-    target_link_libraries(thrift ${SYSLIBY})
+    target_link_libraries(thrift ${SYSLIBS})
     #set_target_properties(thrift PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
     install(TARGETS thrift
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        PUBLIC_HEADER DESTINATION include)
+        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
+        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
+        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
+        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
 endif()
 
 if(WITH_STATIC_LIB)
     add_library(thrift_static STATIC ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
-    target_link_libraries(thrift_static ${SYSLIBY})
+    target_link_libraries(thrift_static ${SYSLIBS})
     install(TARGETS thrift_static
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        PUBLIC_HEADER DESTINATION include)
+        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
+        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
+        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
+        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
 endif()
 
 if(WITH_LIBEVENT)
     find_package(Libevent REQUIRED)  # Libevent comes with CMake support form upstream
     add_library(thriftnb SHARED ${thriftcpp_SOURCES} ${thriftcppnb_SOURCES})
-    target_link_libraries(thriftnb ${SYSLIBY} ${Libevent_LIBRARIES})
+    target_link_libraries(thriftnb ${SYSLIBS} ${Libevent_LIBRARIES})
     include_directories(${Libevent_INCLUDE_DIR})
     install(TARGETS thriftnb
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        PUBLIC_HEADER DESTINATION include)
+        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
+        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
+        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
+        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
 endif()
 
 if(WITH_ZLIB)
     find_package(ZLIB REQUIRED)
     add_library(thriftz SHARED ${thriftcpp_SOURCES} ${thriftcppz_SOURCES})
-    target_link_libraries(thriftz ${SYSLIBY} ${ZLIB_LIBRARIES})
+    target_link_libraries(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
     include_directories(${ZLIB_INCLUDE_DIR})
     install(TARGETS thriftz
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        PUBLIC_HEADER DESTINATION include)
+        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
+        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
+        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
+        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
 endif()
 
 
 if(WITH_QT4)
     find_package(Qt4 REQUIRED)
     add_library(thriftqt SHARED ${thriftcpp_SOURCES} ${thriftcppqt_SOURCES})
-    target_link_libraries(thriftqt ${SYSLIBY} ${QT_LIBRARIES})
+    target_link_libraries(thriftqt ${SYSLIBS} ${QT_LIBRARIES})
     include_directories(${QT_INCLUDES})
     install(TARGETS thriftqt
-        RUNTIME DESTINATION bin
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        PUBLIC_HEADER DESTINATION include)
+        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
+        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
+        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
+        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
 endif()
 
 include_directories("${CMAKE_CURRENT_BINARY_DIR}" src)
@@ -235,7 +236,7 @@ else()
 endif()
 
 # Install the headers
-install(DIRECTORY "src/thrift" DESTINATION "include"
+install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
     FILES_MATCHING PATTERN "*.h" PATTERN "*.tcc")
 
 # Package it
