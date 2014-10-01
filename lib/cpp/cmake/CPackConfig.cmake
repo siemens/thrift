@@ -1,9 +1,8 @@
-include(InstallRequiredSystemLibraries)
+#TODO: Should we bundle system libraries for DLLs?
+#include(InstallRequiredSystemLibraries)
 
 # For help take a look at:
 # http://www.cmake.org/Wiki/CMake:CPackConfiguration
-
-
 
 ### general settings
 set(CPACK_PACKAGE_NAME "${PACKAGE_NAME}")

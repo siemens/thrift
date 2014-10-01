@@ -190,7 +190,7 @@ if(WITH_LIBEVENT)
     add_library(thriftnb SHARED ${thriftcpp_SOURCES} ${thriftcppnb_SOURCES})
     target_link_libraries(thriftnb ${SYSLIBY} ${Libevent_LIBRARIES})
     include_directories(${Libevent_INCLUDE_DIR})
-    install(TARGETS thriftnb thriftnb_static
+    install(TARGETS thriftnb
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib
