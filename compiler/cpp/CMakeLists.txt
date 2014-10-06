@@ -22,20 +22,6 @@ cmake_minimum_required(VERSION 2.8)
 
 project(thrift-compiler)
 
-# Read the version information from the Autoconf file
-file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../../configure.ac" CONFIGURE_AC REGEX "AC_INIT\\(.*\\)" )
-
-# The following variable is used in the version.h.in file
-string(REGEX REPLACE "AC_INIT\\(\\[.*\\], \\[([0-9]+\\.[0-9]+\\.[0-9]+(-dev)?)\\]\\)" "\\1" PACKAGE_VERSION ${CONFIGURE_AC})
-message(STATUS "Thrift package version: ${PACKAGE_VERSION}")
-
-# These are internal to CMake
-string(REGEX REPLACE "([0-9]+\\.[0-9]+\\.[0-9]+)(-dev)?" "\\1" thrift_VERSION ${PACKAGE_VERSION})
-string(REGEX REPLACE "([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1" thrift_VERSION_MAJOR ${thrift_VERSION})
-string(REGEX REPLACE "[0-9]+\\.([0-9])+\\.[0-9]+" "\\1" thrift_VERSION_MINOR ${thrift_VERSION})
-string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" thrift_VERSION_PATCH ${thrift_VERSION})
-message(STATUS "Thrift version: ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH})")
-
 # Windows has a different header
 if(MSVC)
     set(FLEX_FLAGS "--wincompat") # Don't use unistd.h on windows
@@ -145,11 +131,12 @@ THRIFT_ADD_COMPILER(lua     "Enable compiler for Lua" ON)
 # we also add the current binary directory for generated files
 include_directories(${CMAKE_CURRENT_BINARY_DIR} src)
 
-add_executable(thrift ${thrift_SOURCES})
+add_executable(thrift-compiler ${thrift_SOURCES})
+set_target_properties(thrift-compiler PROPERTIES OUTPUT_NAME thrift)
 
-target_link_libraries(thrift libparse)
+target_link_libraries(thrift-compiler libparse)
 
-install(TARGETS thrift DESTINATION bin)
+install(TARGETS thrift-compiler DESTINATION bin)
 
 # mingw32 does not support c++0x features
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -185,4 +172,3 @@ else()
     set(CPACK_GENERATOR "DEB" )
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER ${CPACK_PACKAGE_CONTACT})
 endif()
-include(CPack)
