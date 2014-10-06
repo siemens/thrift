@@ -22,31 +22,8 @@ cmake_minimum_required(VERSION 2.8)
 
 project(thriftcpp)
 
-# CMake specific files like templates and find modules are in the cmake subdirectory of the source dir
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH}" "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
-# Some default settings
-include(DefineCMakeDefaults)
-
-# Build time options are defined here
-include(DefineOptions)
-include(DefineInstallationPaths)
-
 # Read the version information from the Autoconf file
 file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../../configure.ac" CONFIGURE_AC REGEX "AC_INIT\\(.*\\)" )
-
-# The following variable is used in the version.h.in file
-string(REGEX REPLACE "AC_INIT\\(\\[.*\\], \\[([0-9]+\\.[0-9]+\\.[0-9]+(-dev)?)\\]\\)" "\\1" PACKAGE_VERSION ${CONFIGURE_AC})
-set(PACKAGE_NAME "thrift")
-message(STATUS "Thrift package version: ${PACKAGE_VERSION}")
-
-
-# These are internal to CMake
-string(REGEX REPLACE "([0-9]+\\.[0-9]+\\.[0-9]+)(-dev)?" "\\1" thrift_VERSION ${PACKAGE_VERSION})
-string(REGEX REPLACE "([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1" thrift_VERSION_MAJOR ${thrift_VERSION})
-string(REGEX REPLACE "[0-9]+\\.([0-9])+\\.[0-9]+" "\\1" thrift_VERSION_MINOR ${thrift_VERSION})
-string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" thrift_VERSION_PATCH ${thrift_VERSION})
-message(STATUS "Thrift version: ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH})")
 
 # Find required packages
 find_package(Boost 1.53.0 REQUIRED)
@@ -159,7 +136,7 @@ set( thriftcppz_SOURCES
 )
 
 # Thrift Qt4 server
-set( thriftcppz_SOURCES
+set( thriftcppqt_SOURCES
     src/thrift/qt/TQIODeviceTransport.cpp
     src/thrift/qt/TQTcpServer.cpp
 )
@@ -226,8 +203,8 @@ endif()
 include_directories("${CMAKE_CURRENT_BINARY_DIR}" src)
 
 # Add Some definitions for cmake and generate a config.h file
-include(ConfigureChecks)
-configure_file(cmake/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/config.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/config.h)
+
 
 if(NOT MSVC)
     add_definitions("-std=c++0x -pedantic -Wextra")
@@ -238,8 +215,5 @@ endif()
 # Install the headers
 install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
     FILES_MATCHING PATTERN "*.h" PATTERN "*.tcc")
-
-# Package it
-include(CPackConfig)
 
 # TODO: add test subdir
