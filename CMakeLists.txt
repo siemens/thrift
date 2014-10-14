@@ -50,7 +50,11 @@ string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" thrift_VERSION_PATCH ${t
 message(STATUS "Thrift version: ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH})")
 
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/compiler/cpp/)
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp/)
+
+if(WITH_LIBCPP)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp/)
+endif()
+
 
 # create a Distribution Package for the Apache Thrift
 set(CPACK_PACKAGE_NAME "Apache Thrift")

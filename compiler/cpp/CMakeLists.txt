@@ -20,8 +20,6 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-project(thrift-compiler)
-
 # Windows has a different header
 if(MSVC)
     set(FLEX_FLAGS "--wincompat") # Don't use unistd.h on windows

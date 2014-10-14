@@ -20,11 +20,6 @@
 
 cmake_minimum_required(VERSION 2.8)
 
-project(thriftcpp)
-
-# Read the version information from the Autoconf file
-file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/../../configure.ac" CONFIGURE_AC REGEX "AC_INIT\\(.*\\)" )
-
 # Find required packages
 find_package(Boost 1.53.0 REQUIRED)
 include_directories("${Boost_INCLUDE_DIR}")
@@ -62,7 +57,7 @@ set( thriftcpp_SOURCES
 )
 
 # This files don't work on Windows CE as there is no pipe support
-# TODO: This files won't work with UNICODE support on windows. If fixed this can be readded.
+# TODO: This files won't work with UNICODE support on windows. If fixed this can be re-added.
 if (NOT WINCE AND NOT WIN32)
     list(APPEND thriftcpp_SOURCES
        src/thrift/transport/TPipe.cpp
@@ -165,9 +160,10 @@ endif()
 
 if(WITH_LIBEVENT)
     find_package(Libevent REQUIRED)  # Libevent comes with CMake support form upstream
+    include_directories(${Libevent_INCLUDE_DIR})        
     add_library(thriftnb SHARED ${thriftcpp_SOURCES} ${thriftcppnb_SOURCES})
     target_link_libraries(thriftnb ${SYSLIBS} ${Libevent_LIBRARIES})
-    include_directories(${Libevent_INCLUDE_DIR})
+    
     install(TARGETS thriftnb
         RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
         LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
@@ -216,4 +212,5 @@ endif()
 install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
     FILES_MATCHING PATTERN "*.h" PATTERN "*.tcc")
 
+add_subdirectory(test)
 # TODO: add test subdir
