@@ -1,3 +1,8 @@
+# Libraries to build
+option(WITH_LIBCPP "Build the C++ library" ON)
+
+
+# C++ library options
 option(WITH_ZLIB "Build with ZLIB support" OFF)
 option(WITH_LIBEVENT "Build with libevent support" OFF)
 option(WITH_QT4 "Build with Qt4 support" OFF)
@@ -11,6 +16,9 @@ option(WITH_STATIC_LIB "Build with a static library" ON)
 
 option(WITH_TESTING "Build with unit tests" OFF)
 option(WITH_EXAMPLES "Build examples" ON)
+
+#NOTE: C++ compiler options are defined in the compile CMakeLists.txt
+
 
 # Visual Studio only options
 if(MSVC)
