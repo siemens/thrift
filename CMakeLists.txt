@@ -56,6 +56,13 @@ endif()
 
 find_package(Threads)
 
+include(CTest)
+if(BUILD_TESTING)
+  message(STATUS "Building with unittests")
+else ()
+  message(STATUS "Building without tests")
+endif ()
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/compiler/cpp/)
 
 if(WITH_LIBCPP)

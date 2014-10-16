@@ -256,5 +256,6 @@ endif()
 install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
     FILES_MATCHING PATTERN "*.h" PATTERN "*.tcc")
 
-add_subdirectory(test)
-# TODO: add test subdir
+if(BUILD_TESTING)
+    add_subdirectory(test)
+endif()
