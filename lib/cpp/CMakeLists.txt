@@ -24,6 +24,9 @@ cmake_minimum_required(VERSION 2.8)
 find_package(Boost 1.53.0 REQUIRED)
 include_directories("${Boost_INCLUDE_DIR}")
 
+# SYSLIBS contains libraries that need to be linked to all lib targets
+set(SYSLIBS "")
+
 # Create the thrift C++ library
 set( thriftcpp_SOURCES
    src/thrift/Thrift.cpp
@@ -102,7 +105,8 @@ if(WITH_BOOSTTHREADS)
         src/thrift/concurrency/BoostMutex.cpp
     )
     list(APPEND SYSLIBS "${Boost_LIBRARIES}")
-elseif(POSIX AND NOT WITH_STDTHREADS)
+elseif(UNIX AND NOT WITH_STDTHREADS)
+    list(APPEND SYSLIBS pthread)
     set( thriftcpp_threads_SOURCES
         src/thrift/concurrency/PosixThreadFactory.cpp
         src/thrift/concurrency/Mutex.cpp
@@ -160,51 +164,91 @@ endif()
 
 if(WITH_LIBEVENT)
     find_package(Libevent REQUIRED)  # Libevent comes with CMake support form upstream
-    include_directories(${Libevent_INCLUDE_DIR})        
-    add_library(thriftnb SHARED ${thriftcpp_SOURCES} ${thriftcppnb_SOURCES})
-    target_link_libraries(thriftnb ${SYSLIBS} ${Libevent_LIBRARIES})
-    
-    install(TARGETS thriftnb
-        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+    include_directories(${Libevent_INCLUDE_DIR})
+
+    if(WITH_SHARED_LIB)
+        add_library(thriftnb SHARED ${thriftcppnb_SOURCES})
+        target_link_libraries(thriftnb ${SYSLIBS} ${Libevent_LIBRARIES})
+        #set_target_properties(thriftnb PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
+        install(TARGETS thriftnb
+            RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
+            LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
+            ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
+            PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+    endif()
+
+    if(WITH_STATIC_LIB)
+        add_library(thriftnb_static STATIC ${thriftcppnb_SOURCES})
+        target_link_libraries(thriftnb_static ${SYSLIBS} ${Libevent_LIBRARIES})
+        install(TARGETS thriftnb_static
+            RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
+            LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
+            ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
+            PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+    endif()
 endif()
 
 if(WITH_ZLIB)
     find_package(ZLIB REQUIRED)
-    add_library(thriftz SHARED ${thriftcpp_SOURCES} ${thriftcppz_SOURCES})
-    target_link_libraries(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
     include_directories(${ZLIB_INCLUDE_DIR})
-    install(TARGETS thriftz
-        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+
+    if(WITH_SHARED_LIB)
+        add_library(thriftz SHARED ${thriftcppz_SOURCES})
+        target_link_libraries(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
+        #set_target_properties(thriftz PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
+        install(TARGETS thriftz
+            RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
+            LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
+            ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
+            PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+    endif()
+
+    if(WITH_STATIC_LIB)
+        add_library(thriftz_static STATIC ${thriftcppz_SOURCES})
+        target_link_libraries(thriftz_static ${SYSLIBS} ${ZLIB_LIBRARIES})
+        install(TARGETS thriftz_static
+            RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
+            LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
+            ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
+            PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+    endif()
 endif()
 
 
 if(WITH_QT4)
     find_package(Qt4 REQUIRED)
-    add_library(thriftqt SHARED ${thriftcpp_SOURCES} ${thriftcppqt_SOURCES})
-    target_link_libraries(thriftqt ${SYSLIBS} ${QT_LIBRARIES})
+    add_library(thriftqt SHARED ${thriftcppqt_SOURCES})
+
     include_directories(${QT_INCLUDES})
-    install(TARGETS thriftqt
-        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+    if(WITH_SHARED_LIB)
+        add_library(thriftqt SHARED ${thriftcppqt_SOURCES})
+        target_link_libraries(thriftqt ${SYSLIBS} ${QT_LIBRARIES})
+        #set_target_properties(thriftqt PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
+        install(TARGETS thriftqt
+            RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
+            LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
+            ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
+            PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+    endif()
+
+    if(WITH_STATIC_LIB)
+        add_library(thriftqt_static STATIC ${thriftcppqt_SOURCES})
+        target_link_libraries(thriftqt_static ${SYSLIBS} ${QT_LIBRARIES})
+        install(TARGETS thriftqt_static
+            RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
+            LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
+            ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
+            PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
+    endif()
 endif()
 
-include_directories("${CMAKE_CURRENT_BINARY_DIR}" src)
+include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/thrift" src)
 
 # Add Some definitions for cmake and generate a config.h file
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/config.h)
 
 
-if(NOT MSVC)
-    add_definitions("-std=c++0x -pedantic -Wextra")
-else()
+if(MSVC)
     add_definitions("-DUNICODE -D_UNICODE")
 endif()
 

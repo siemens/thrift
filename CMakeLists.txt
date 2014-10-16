@@ -49,6 +49,13 @@ string(REGEX REPLACE "[0-9]+\\.([0-9])+\\.[0-9]+" "\\1" thrift_VERSION_MINOR ${t
 string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" thrift_VERSION_PATCH ${thrift_VERSION})
 message(STATUS "Thrift version: ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH})")
 
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+  # TODO: -pedantic can not be used at the moment because of: https://issues.apache.org/jira/browse/THRIFT-2784
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -Wall -Wextra -pedantic")
+endif()
+
+find_package(Threads)
+
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/compiler/cpp/)
 
 if(WITH_LIBCPP)
