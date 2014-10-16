@@ -36,12 +36,21 @@ string(REGEX REPLACE "[0-9]+\\.([0-9])+\\.[0-9]+" "\\1" thrift_VERSION_MINOR ${t
 string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" thrift_VERSION_PATCH ${thrift_VERSION})
 message(STATUS "Thrift version: ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH})")
 
+# add definitions
+include(DefineCMakeDefaults.cmake)
+include(DefinePlatformDefaults.cmake)
+include(DefineCompilerFlags.cmake)
+include(DefineInstallationPaths.cmake)
+include(DefineOptions.cmake)
+
+include(ConfigureChecks.cmake)
+configure_file(config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/thrift/config.h)
 
 find_package(Boost 1.53.0 REQUIRED)
 find_package(ZLIB)
 find_package(OpenSSL)
 
-# Create the thrift compiler
+# Create the thrift C++ library
 set( libthrift_SOURCES 
    src/thrift/Thrift.cpp
    src/thrift/TApplicationException.cpp
@@ -56,14 +65,11 @@ set( libthrift_SOURCES
    src/thrift/protocol/TMultiplexedProtocol.cpp
    src/thrift/transport/TTransportException.cpp
    src/thrift/transport/TFDTransport.cpp
-   src/thrift/transport/TFileTransport.cpp
    src/thrift/transport/TSimpleFileTransport.cpp
    src/thrift/transport/THttpTransport.cpp
    src/thrift/transport/THttpClient.cpp
    src/thrift/transport/THttpServer.cpp
    src/thrift/transport/TSocket.cpp
-   src/thrift/transport/TPipe.cpp
-   src/thrift/transport/TPipeServer.cpp
    src/thrift/transport/TSocketPool.cpp
    src/thrift/transport/TServerSocket.cpp
    src/thrift/transport/TTransportUtils.cpp
@@ -76,18 +82,53 @@ set( libthrift_SOURCES
    src/thrift/processor/PeekProcessor.cpp
 )
 
-if ( OPENSSL_FOUND )
-list( APPEND libthrift_SOURCES 
-   src/thrift/transport/TSSLSocket.cpp
-   src/thrift/transport/TSSLServerSocket.cpp
-)
-endif ( OPENSSL_FOUND )
+# This files don't work on Windows CE as there is no pipe support
+if (NOT WINCE)
+    list(APPEND libthrift_SOURCES
+       src/thrift/transport/TPipe.cpp
+       src/thrift/transport/TPipeServer.cpp
+       src/thrift/transport/TFileTransport.cpp
+    )   
+endif()
 
-set( libthrift_posixthreads_SOURCES 
-    src/thrift/concurrency/Mutex.cpp
-    src/thrift/concurrency/Monitor.cpp
-    src/thrift/concurrency/PosixThreadFactory.cpp
-)
+
+if (WIN32)
+    list(APPEND libthrift_SOURCES
+        src/thrift/windows/TWinsockSingleton.cpp
+        src/thrift/windows/SocketPair.cpp
+        src/thrift/windows/GetTimeOfDay.cpp
+        src/thrift/windows/WinFcntl.cpp
+    )
+    if(NOT WINCE)
+        # This file uses pipes so it currently won't work on Windows CE
+        list(APPEND libthrift_SOURCES
+            src/thrift/windows/OverlappedSubmissionThread.cpp
+        )
+    endif()
+endif()
+
+
+if(OPENSSL_FOUND AND WITH_OPENSSL)
+    list( APPEND libthrift_SOURCES 
+       src/thrift/transport/TSSLSocket.cpp
+       src/thrift/transport/TSSLServerSocket.cpp
+    )
+endif()
+
+if(POSIX AND NOT FORCE_STDTHREADS)
+    set( libthrift_threads_SOURCES
+        src/thrift/concurrency/PosixThreadFactory.cpp
+        src/thrift/concurrency/Mutex.cpp
+        src/thrift/concurrency/Monitor.cpp
+    )
+else()
+    set( libthrift_threads_SOURCES
+        src/thrift/concurrency/StdThreadFactory.cpp
+        src/thrift/concurrency/StdMutex.cpp
+        src/thrift/concurrency/StdMonitor.cpp
+    )
+endif()
+
 
 set( libthrift_boostthreads_SOURCES 
     src/thrift/concurrency/BoostThreadFactory.cpp
@@ -106,22 +147,35 @@ set( libthriftz_SOURCES
     src/thrift/transport/TZlibTransport.cpp
 )
 
-add_library(thrift SHARED ${libthrift_SOURCES} ${libthrift_posixthreads_SOURCES})
-add_library(thrift_boostthreads SHARED ${libthrift_SOURCES} ${libthrift_boostthreads_SOURCES})
-add_library(thriftnb SHARED ${libthrift_SOURCES} ${libthriftnb_SOURCES})
+add_library(thrift SHARED ${libthrift_SOURCES} ${libthrift_threads_SOURCES})
 
-if ( ZLIB_FOUND )
+if(WITH_STATIC_LIB)
+add_library(thrift_static STATIC ${libthrift_SOURCES} ${libthrift_threads_SOURCES})
+endif()
+
+if (Boost_FOUND)
+    add_library(thrift_boostthreads SHARED ${libthrift_SOURCES} ${libthrift_boostthreads_SOURCES})
+    target_link_libraries(thrift_boostthreads ${Boost_LIBRARIES})
+endif()
+
+if(Libevent_FOUND) # Libevent comes with CMake support form upstream
+    add_library(thriftnb SHARED ${libthrift_SOURCES} ${libthriftnb_SOURCES})
+    target_link_libraries(thriftnb ${Libevent_LIBRARIES})
+endif()
+
+if(ZLIB_FOUND)
     add_library(thriftz SHARED ${libthrift_SOURCES} ${libthriftz_SOURCES})
     target_link_libraries(thriftz ${ZLIB_LIBRARIES})
-endif( ZLIB_FOUND )
+endif(ZLIB_FOUND)
 
 include_directories(${CMAKE_CURRENT_BINARY_DIR} src)
 
 install(TARGETS thrift LIBRARY DESTINATION lib)
 
-set(CMAKE_CXX_FLAGS "-std=c++0x -pedantic -Wextra")
+if(NOT MSVC)
+    add_definitions( "-std=c++0x -pedantic -Wextra")
+endif()
 
-# TODO add libthriftnb based on libevent existence
 # TODO add libthriftqt based on qt existence
 # TODO configure option to enable, disable libs
 # TODO add test subdir
