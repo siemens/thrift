@@ -14,8 +14,8 @@ option(WITH_STDTHREADS "Build with C++ std::thread support" OFF)
 option(WITH_SHARED_LIB "Build with a shared library" ON)
 option(WITH_STATIC_LIB "Build with a static library" ON)
 
-option(WITH_TESTING "Build with unit tests" OFF)
-option(WITH_EXAMPLES "Build examples" ON)
+option(BUILD_TESTING "Build with unit tests" ON)
+option(BUILD_EXAMPLES "Build examples" ON)
 
 #NOTE: C++ compiler options are defined in the compile CMakeLists.txt
 
