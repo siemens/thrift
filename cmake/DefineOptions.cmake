@@ -1,5 +1,6 @@
 # Libraries to build
-option(WITH_LIBCPP "Build the C++ library" ON)
+option(WITH_CPP "Build the C++ library" ON)
+option(WITH_C_GLIB "Build the GLib C library" ON)
 
 
 # C++ library options

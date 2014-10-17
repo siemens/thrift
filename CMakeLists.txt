@@ -63,10 +63,14 @@ else ()
   message(STATUS "Building without tests")
 endif ()
 
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/compiler/cpp/)
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/compiler/cpp)
 
-if(WITH_LIBCPP)
-    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp/)
+if(WITH_CPP)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp)
+endif()
+
+if(WITH_C_GLIB)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/c_glib)
 endif()
 
 
