@@ -22,7 +22,10 @@ set(Boost_USE_STATIC_LIBS ON) # Force the use of static boost test framework
 find_package(Boost 1.53.0 REQUIRED COMPONENTS unit_test_framework)
 include_directories("${Boost_INCLUDE_DIR}")
 
-# Create the thrift C++ library
+#Make sure gen-cpp files can be included
+include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+
+# Create the thrift C++ test library
 set(testgencpp_SOURCES
     gen-cpp/DebugProtoTest_types.cpp
     gen-cpp/DebugProtoTest_types.h
@@ -123,9 +126,9 @@ target_link_libraries(TPipedTransportTest
 add_test(NAME TPipedTransportTest COMMAND TPipedTransportTest)
 
 set(AllProtocolsTest_SOURCES
-	AllProtocolTests.cpp
-	AllProtocolTests.tcc
-	GenericHelpers
+    AllProtocolTests.cpp
+    AllProtocolTests.tcc
+    GenericHelpers
     )
 
 add_executable(AllProtocolsTest ${AllProtocolsTest_SOURCES})
@@ -165,10 +168,10 @@ target_link_libraries(SpecializationTest
 add_test(NAME SpecializationTest COMMAND SpecializationTest)
 
 set(concurrency_test_SOURCES
-	concurrency/Tests.cpp
-	concurrency/ThreadFactoryTests.h
-	concurrency/ThreadManagerTests.h
-	concurrency/TimerManagerTests.h
+    concurrency/Tests.cpp
+    concurrency/ThreadFactoryTests.h
+    concurrency/ThreadManagerTests.h
+    concurrency/TimerManagerTests.h
 )
 add_executable(concurrency_test ${concurrency_test_SOURCES})
 target_link_libraries(concurrency_test
@@ -180,18 +183,19 @@ set(link_test_SOURCES
     link/LinkTest.cpp
     link/TemplatedService1.cpp
     link/TemplatedService2.cpp
+    gen-cpp/ParentService.h
 )
 add_executable(link_test ${link_test_SOURCES})
 add_test(NAME link_test COMMAND link_test)
 
 if(WITH_LIBEVENT)
 set(processor_test_SOURCES
-	processor/ProcessorTest.cpp
-	processor/EventLog.cpp
-	processor/ServerThread.cpp
-	processor/EventLog.h
-	processor/Handlers.h
-	processor/ServerThread.h
+    processor/ProcessorTest.cpp
+    processor/EventLog.cpp
+    processor/ServerThread.cpp
+    processor/EventLog.h
+    processor/Handlers.h
+    processor/ServerThread.h
 )
 add_executable(processor_test ${processor_test_SOURCES})
 target_link_libraries(processor_test
@@ -215,6 +219,7 @@ endif()
 #
 # Common thrift code generation rules
 #
+
 
 add_custom_command(OUTPUT gen-cpp/DebugProtoTest_types.cpp gen-cpp/DebugProtoTest_types.h
     COMMAND thrift-compiler --gen cpp:dense ${PROJECT_SOURCE_DIR}/test/DebugProtoTest.thrift
@@ -244,6 +249,6 @@ add_custom_command(OUTPUT gen-cpp/SecondService.cpp gen-cpp/ThriftTest_constants
     COMMAND thrift-compiler --gen cpp:dense ${PROJECT_SOURCE_DIR}/test/ThriftTest.thrift
 )
 
-add_custom_command(OUTPUT gen-cpp/ChildService.cpp
-    COMMAND thrift-compiler --gen cpp:templates,cob_style ${PROJECT_SOURCE_DIR}/test/proc.thrift
+add_custom_command(OUTPUT gen-cpp/ChildService.cpp gen-cpp/ChildService.h gen-cpp/ParentService.cpp gen-cpp/ParentService.h gen-cpp/proc_types.cpp gen-cpp/proc_types.h
+    COMMAND thrift-compiler --gen cpp:templates,cob_style ${CMAKE_CURRENT_SOURCE_DIR}/processor/proc.thrift
 )

@@ -24,6 +24,8 @@ cmake_minimum_required(VERSION 2.8)
 find_package(Boost 1.53.0 REQUIRED)
 include_directories("${Boost_INCLUDE_DIR}")
 
+include_directories(src)
+
 # SYSLIBS contains libraries that need to be linked to all lib targets
 set(SYSLIBS "")
 
@@ -141,6 +143,7 @@ set( thriftcppqt_SOURCES
 )
 
 
+
 if(WITH_SHARED_LIB)
     add_library(thrift SHARED ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
     target_link_libraries(thrift ${SYSLIBS})
@@ -241,12 +244,6 @@ if(WITH_QT4)
             PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
     endif()
 endif()
-
-include_directories("${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/thrift" src)
-
-# Add Some definitions for cmake and generate a config.h file
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/../../cmake/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/thrift/config.h)
-
 
 if(MSVC)
     add_definitions("-DUNICODE -D_UNICODE")
