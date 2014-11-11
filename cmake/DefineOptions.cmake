@@ -16,6 +16,7 @@ option(WITH_STDTHREADS "Build with C++ std::thread support" OFF)
 option(WITH_SHARED_LIB "Build with a shared library" ON)
 option(WITH_STATIC_LIB "Build with a static library" ON)
 
+option(BUILD_COMPILER "Build the thrift compiler" ON)
 option(BUILD_TESTING "Build with unit tests" ON)
 option(BUILD_EXAMPLES "Build examples" ON)
 
