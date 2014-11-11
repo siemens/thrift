@@ -62,8 +62,9 @@ if(BUILD_TESTING)
 else ()
   message(STATUS "Building without tests")
 endif ()
-
-add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/compiler/cpp)
+if(BUILD_COMPILER)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/compiler/cpp)
+endif()
 
 if(WITH_CPP)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/lib/cpp)
