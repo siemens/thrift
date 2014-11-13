@@ -54,25 +54,11 @@ set(thrift_c_glib_SOURCES
     src/thrift/c_glib/server/thrift_simple_server.c
 )
 
-if(WITH_SHARED_LIB)
-    add_library(thrift_c_glib SHARED ${thrift_c_glib_SOURCES})
-    target_link_libraries(thrift_c_glib ${SYSLIBS})
-    install(TARGETS thrift_c_glib
-        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-endif()
+# Contains the thrift specific ADD_LIBRARY_THRIFT and TARGET_LINK_LIBRARIES_THRIFT
+include(ThriftMacros)
 
-if(WITH_STATIC_LIB)
-    add_library(thrift_c_glib_static STATIC ${thrift_c_glib_SOURCES})
-    target_link_libraries(thrift_c_glib_static ${SYSLIBS})
-    install(TARGETS thrift_c_glib_static
-        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-endif()
+ADD_LIBRARY_THRIFT(thrift_c_glib ${thrift_c_glib_SOURCES})
+TARGET_LINK_LIBRARIES_THRIFT(thrift_c_glib ${SYSLIBS})
 
 # Install the headers
 install(DIRECTORY "src/thrift" DESTINATION "${INCLUDE_INSTALL_DIR}"
