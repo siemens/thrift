@@ -20,7 +20,7 @@ CMAKE_DEPENDENT_OPTION(WITH_LIBEVENT "Build with libevent support" ON
                        "Libevent_FOUND" OFF)
 find_package(Qt4 QUIET)
 CMAKE_DEPENDENT_OPTION(WITH_QT4 "Build with Qt4 support" ON
-                       "Qt4_FOUND" OFF)
+                       "QT4_FOUND" OFF)
 find_package(OpenSSL QUIET)
 CMAKE_DEPENDENT_OPTION(WITH_OPENSSL "Build with OpenSSL support" ON
                        "OpenSSL_FOUND" OFF)
@@ -42,10 +42,13 @@ option(WITH_STATIC_LIB "Build with a static library" ON)
 
 #NOTE: C++ compiler options are defined in the lib/cpp/CMakeLists.txt
 
-
 # Visual Studio only options
 if(MSVC)
 option(WITH_MT "Build unsing MT instead of MT (MSVC only)" OFF)
+
+# For Debug build types, append a "d" to the library names.
+set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Set debug library postfix" FORCE)
+set(CMAKE_RELEASE_POSTFIX "" CACHE STRING "Set release library postfix" FORCE)
 
 # Replace MD with MT
 if(WITH_MT)
@@ -60,13 +63,9 @@ if(WITH_MT)
     foreach(CompilerFlag ${CompilerFlags})
       string(REPLACE "/MD" "/MT" ${CompilerFlag} "${${CompilerFlag}}")
     endforeach()
-    # For Debug build types, append a "d" to the library names.
-    set(CMAKE_DEBUG_POSTFIX "mtd" CACHE STRING "Set debug library postfix" FORCE)
-    set(CMAKE_RELEASE_POSTFIX "mt" CACHE STRING "Set release library postfix" FORCE)
+    set(STATIC_POSTFIX "mt" CACHE STRING "Set static library postfix" FORCE)
 else(WITH_MT)
-    # For Debug build types, append a "d" to the library names.
-    set(CMAKE_DEBUG_POSTFIX "mdd" CACHE STRING "Set debug library postfix" FORCE)
-    set(CMAKE_RELEASE_POSTFIX "md" CACHE STRING "Set release library postfix" FORCE)
+    set(STATIC_POSTFIX "md" CACHE STRING "Set static library postfix" FORCE)
 endif(WITH_MT)
 
 endif(MSVC)

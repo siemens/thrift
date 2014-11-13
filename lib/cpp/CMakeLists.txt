@@ -142,107 +142,35 @@ set( thriftcppqt_SOURCES
     src/thrift/qt/TQTcpServer.cpp
 )
 
+# Contains the thrift specific ADD_LIBRARY_THRIFT and TARGET_LINK_LIBRARIES_THRIFT
+include(ThriftMacros)
 
-
-if(WITH_SHARED_LIB)
-    add_library(thrift SHARED ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
-    target_link_libraries(thrift ${SYSLIBS})
-    #set_target_properties(thrift PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
-    install(TARGETS thrift
-        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-endif()
-
-if(WITH_STATIC_LIB)
-    add_library(thrift_static STATIC ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
-    target_link_libraries(thrift_static ${SYSLIBS})
-    install(TARGETS thrift_static
-        RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-        LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-        ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-        PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-endif()
+ADD_LIBRARY_THRIFT(thrift ${thriftcpp_SOURCES} ${thriftcpp_threads_SOURCES})
+TARGET_LINK_LIBRARIES_THRIFT(thrift ${SYSLIBS})
 
 if(WITH_LIBEVENT)
     find_package(Libevent REQUIRED)  # Libevent comes with CMake support form upstream
     include_directories(${Libevent_INCLUDE_DIR})
 
-    if(WITH_SHARED_LIB)
-        add_library(thriftnb SHARED ${thriftcppnb_SOURCES})
-        target_link_libraries(thriftnb ${SYSLIBS} ${Libevent_LIBRARIES})
-        #set_target_properties(thriftnb PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
-        install(TARGETS thriftnb
-            RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-            LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-            ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-            PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-    endif()
-
-    if(WITH_STATIC_LIB)
-        add_library(thriftnb_static STATIC ${thriftcppnb_SOURCES})
-        target_link_libraries(thriftnb_static ${SYSLIBS} ${Libevent_LIBRARIES})
-        install(TARGETS thriftnb_static
-            RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-            LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-            ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-            PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-    endif()
+    ADD_LIBRARY_THRIFT(thriftnb ${thriftcppnb_SOURCES})
+    TARGET_LINK_LIBRARIES_THRIFT(thriftnb ${SYSLIBS} ${Libevent_LIBRARIES})
 endif()
 
 if(WITH_ZLIB)
     find_package(ZLIB REQUIRED)
     include_directories(${ZLIB_INCLUDE_DIR})
 
-    if(WITH_SHARED_LIB)
-        add_library(thriftz SHARED ${thriftcppz_SOURCES})
-        target_link_libraries(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
-        #set_target_properties(thriftz PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
-        install(TARGETS thriftz
-            RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-            LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-            ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-            PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-    endif()
-
-    if(WITH_STATIC_LIB)
-        add_library(thriftz_static STATIC ${thriftcppz_SOURCES})
-        target_link_libraries(thriftz_static ${SYSLIBS} ${ZLIB_LIBRARIES})
-        install(TARGETS thriftz_static
-            RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-            LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-            ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-            PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-    endif()
+    ADD_LIBRARY_THRIFT(thriftz ${thriftcppz_SOURCES})
+    TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ${ZLIB_LIBRARIES})
 endif()
 
 
 if(WITH_QT4)
     find_package(Qt4 REQUIRED)
-    add_library(thriftqt SHARED ${thriftcppqt_SOURCES})
-
     include_directories(${QT_INCLUDES})
-    if(WITH_SHARED_LIB)
-        add_library(thriftqt SHARED ${thriftcppqt_SOURCES})
-        target_link_libraries(thriftqt ${SYSLIBS} ${QT_LIBRARIES})
-        #set_target_properties(thriftqt PROPERTIES PUBLIC_HEADER "${thriftcpp_HEADERS}")
-        install(TARGETS thriftqt
-            RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-            LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-            ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-            PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-    endif()
 
-    if(WITH_STATIC_LIB)
-        add_library(thriftqt_static STATIC ${thriftcppqt_SOURCES})
-        target_link_libraries(thriftqt_static ${SYSLIBS} ${QT_LIBRARIES})
-        install(TARGETS thriftqt_static
-            RUNTIME DESTINATION "${BIN_INSTALL_DIR}"
-            LIBRARY DESTINATION "${LIB_INSTALL_DIR}"
-            ARCHIVE DESTINATION "${LIB_INSTALL_DIR}"
-            PUBLIC_HEADER DESTINATION "${INCLUDE_INSTALL_DIR}")
-    endif()
+    ADD_LIBRARY_THRIFT(thriftqt ${thriftcppqt_SOURCES})
+    TARGET_LINK_LIBRARIES_THRIFT(thriftz ${SYSLIBS} ${QT_LIBRARIES})
 endif()
 
 if(MSVC)
