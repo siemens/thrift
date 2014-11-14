@@ -30,9 +30,15 @@ include(DefineCMakeDefaults)
 # Build time options are defined here
 include(DefineOptions)
 include(DefineInstallationPaths)
+
+# Based on the options set some platform specifics
+include(DefinePlatformSpecifc)
+
+# Generate the config.h file
+include(ConfigureChecks)
+
 # Package it
 include(CPackConfig)
-include(ConfigureChecks)
 
 # TODO: add `git rev-parse --short HEAD`
 # Read the version information from the Autoconf file
@@ -40,19 +46,14 @@ file (STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/configure.ac" CONFIGURE_AC REGEX "AC_
 
 # The following variable is used in the version.h.in file
 string(REGEX REPLACE "AC_INIT\\(\\[.*\\], \\[([0-9]+\\.[0-9]+\\.[0-9]+(-dev)?)\\]\\)" "\\1" PACKAGE_VERSION ${CONFIGURE_AC})
-message(STATUS "Thrift package version: ${PACKAGE_VERSION}")
+message(STATUS "Parsed Thrift package version: ${PACKAGE_VERSION}")
 
 # These are internal to CMake
 string(REGEX REPLACE "([0-9]+\\.[0-9]+\\.[0-9]+)(-dev)?" "\\1" thrift_VERSION ${PACKAGE_VERSION})
 string(REGEX REPLACE "([0-9]+)\\.[0-9]+\\.[0-9]+" "\\1" thrift_VERSION_MAJOR ${thrift_VERSION})
 string(REGEX REPLACE "[0-9]+\\.([0-9])+\\.[0-9]+" "\\1" thrift_VERSION_MINOR ${thrift_VERSION})
 string(REGEX REPLACE "[0-9]+\\.[0-9]+\\.([0-9]+)" "\\1" thrift_VERSION_PATCH ${thrift_VERSION})
-message(STATUS "Thrift version: ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH})")
-
-if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-  # TODO: -pedantic can not be used at the moment because of: https://issues.apache.org/jira/browse/THRIFT-2784
-  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O2 -Wall -Wextra -pedantic")
-endif()
+message(STATUS "Parsed Thrift version: ${thrift_VERSION} (${thrift_VERSION_MAJOR}.${thrift_VERSION_MINOR}.${thrift_VERSION_PATCH})")
 
 find_package(Threads)
 
@@ -104,3 +105,4 @@ else()
     set(CPACK_DEBIAN_PACKAGE_MAINTAINER ${CPACK_PACKAGE_CONTACT})
 endif()
 
+PRINT_CONFIG_SUMMARY()

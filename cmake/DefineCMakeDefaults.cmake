@@ -29,7 +29,7 @@ endif (NOT CMAKE_BUILD_TYPE)
 # Create the compile command database for clang by default
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Put the libaries and binaries that get built into directories at the
+# Put the libraries and binaries that get built into directories at the
 # top of the build tree rather than in hard-to-find leaf
 # directories. This simplifies manual testing and the use of the build
 # tree rather than installed thrift libraries.
