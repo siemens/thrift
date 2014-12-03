@@ -134,7 +134,7 @@ set_target_properties(thrift-compiler PROPERTIES OUTPUT_NAME thrift)
 
 target_link_libraries(thrift-compiler libparse)
 
-install(TARGETS thrift-compiler DESTINATION bin)
+install(TARGETS thrift-compiler DESTINATION "${BIN_INSTALL_DIR}")
 
 # create a Distribution Package for the Apache Thrift Compiler
 set(CPACK_PACKAGE_NAME "Apache Thrift")
