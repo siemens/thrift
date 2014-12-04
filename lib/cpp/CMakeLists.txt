@@ -63,7 +63,7 @@ set( thriftcpp_SOURCES
 
 # This files don't work on Windows CE as there is no pipe support
 # TODO: This files won't work with UNICODE support on windows. If fixed this can be re-added.
-if (NOT WINCE AND NOT WIN32)
+if (NOT WINCE)
     list(APPEND thriftcpp_SOURCES
        src/thrift/transport/TPipe.cpp
        src/thrift/transport/TPipeServer.cpp
