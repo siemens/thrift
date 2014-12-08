@@ -43,7 +43,7 @@ to generate an installer and distribution package do this:
 * enable/disable
 * make check (QUESTION: Is test the default CMake target?)
 * make cross
-* make dist
+* make dist (create an alias to make package_source)
 * make doc
 * cpack (C++ and make dist only ?)
   * thrift-compiler
